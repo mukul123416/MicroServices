@@ -4,6 +4,8 @@ import com.lcwd.user.service.entities.User;
 import com.lcwd.user.service.payload.ErrorResponse;
 import com.lcwd.user.service.payload.SuccessResponse;
 import com.lcwd.user.service.services.UserService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +30,19 @@ public class UserController {
         }
     }
 
+
     @GetMapping("/{userId}")
+    @CircuitBreaker(name = "ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
     public ResponseEntity<?> getSingleUser(@PathVariable String userId){
-        try {
-            User user = this.userService.getUser(userId);
-            return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
-        }catch (Exception e){
-            return ErrorResponse.ResponseHandler(e.getMessage(),true,HttpStatus.BAD_REQUEST);
-        }
+        User user = this.userService.getUser(userId);
+        return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
+    }
+
+    //creating fall back method for circuit breaker
+    public ResponseEntity<?> ratingHotelFallback(String userId,Exception ex){
+        System.out.println("Fallback is executed because service is down : "+ex.getMessage());
+        User user = User.builder().email("dummy@gmail.com").name("Dummy").about("This user is created dummy because some service is down").userId("12345").build();
+        return new ResponseEntity<>(user,HttpStatus.OK);
     }
 
     @GetMapping
