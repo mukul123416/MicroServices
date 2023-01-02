@@ -5,6 +5,7 @@ import com.lcwd.user.service.payload.ErrorResponse;
 import com.lcwd.user.service.payload.SuccessResponse;
 import com.lcwd.user.service.services.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,15 @@ public class UserController {
         }
     }
 
+    int retryCount=1;
 
     @GetMapping("/{userId}")
-    @CircuitBreaker(name = "ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
+//    @CircuitBreaker(name = "ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
+    @Retry(name = "ratingHotelService",fallbackMethod = "ratingHotelFallback")
     public ResponseEntity<?> getSingleUser(@PathVariable String userId){
+        System.out.println("Get Single User Handler: UserController");
+        System.out.println("Retry count: {} "+retryCount);
+        retryCount++;
         User user = this.userService.getUser(userId);
         return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
     }
