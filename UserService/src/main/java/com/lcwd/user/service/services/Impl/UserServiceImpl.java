@@ -77,7 +77,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(String userId) {
+
         userRepository.deleteById(userId);
+
+        Rating[] ratingsOfUser = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/"+userId, Rating[].class);
+        List<Rating> ratings= Arrays.stream(ratingsOfUser).toList();
+
+        List<Rating> ratingList=ratings.stream().map(rating -> {
+            ratingService.deleteRating(rating.getRatingId());
+            hotelService.deleteHotel(rating.getHotelId());
+            return rating;
+        }).collect(Collectors.toList());
+
     }
 
     @Override
