@@ -41,8 +41,9 @@ public class RatingController {
     @GetMapping
     public ResponseEntity<?> getAllRating(){
         try {
-            List<Rating> ratings = this.ratingService.getAllRating();
-            return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,ratings);
+            List<?> ratings = this.ratingService.getAllRating();
+            return ResponseEntity.ok(ratings);
+//            return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,ratings);
         }catch (Exception e){
             return ErrorResponse.ResponseHandler(e.getMessage(),true,HttpStatus.BAD_REQUEST);
         }

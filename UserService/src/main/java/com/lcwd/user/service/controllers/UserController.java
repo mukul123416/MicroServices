@@ -35,7 +35,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
 //    @CircuitBreaker(name = "ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
-    @Retry(name = "ratingHotelService",fallbackMethod = "ratingHotelFallback")
+    @Retry(name = "ratingHotelService",fallbackMethod = "SingleRatingHotelFallback")
     public ResponseEntity<?> getSingleUser(@PathVariable String userId){
         System.out.println("Get Single User Handler: UserController");
         System.out.println("Retry count: {} "+retryCount);
@@ -44,21 +44,27 @@ public class UserController {
         return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
     }
 
+    @GetMapping
+    @Retry(name = "ratingHotelService",fallbackMethod = "AllRatingHotelFallback")
+    public ResponseEntity<?> getAllUser(){
+            System.out.println("Get All User Handler: UserController");
+            System.out.println("Retry count: {} "+retryCount);
+            retryCount++;
+            List<User> user = this.userService.getAllUser();
+            return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
+    }
+
     //creating fall back method for circuit breaker
-    public ResponseEntity<?> ratingHotelFallback(String userId,Exception ex){
+    public ResponseEntity<?> SingleRatingHotelFallback(String userId,Exception ex){
         System.out.println("Fallback is executed because service is down : "+ex.getMessage());
         User user = User.builder().email("dummy@gmail.com").name("Dummy").about("This user is created dummy because some service is down").userId("12345").build();
         return new ResponseEntity<>(user,HttpStatus.OK);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllUser(){
-        try {
-            List<User> user = this.userService.getAllUser();
-            return SuccessResponse.ResponseHandler("Successfully Fetched",false,HttpStatus.OK,user);
-        }catch (Exception e){
-            return ErrorResponse.ResponseHandler(e.getMessage(),true,HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<?> AllRatingHotelFallback(Exception ex){
+        System.out.println("Fallback is executed because service is down : "+ex.getMessage());
+        User user = User.builder().email("dummy@gmail.com").name("Dummy").about("This user is created dummy because some service is down").userId("12345").build();
+        return new ResponseEntity<>(user,HttpStatus.OK);
     }
 
     @DeleteMapping("/{userId}")
